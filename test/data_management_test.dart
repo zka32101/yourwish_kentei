@@ -68,9 +68,16 @@ void main() {
     expect(ref.read(_memoProvider), {'q1': '残す'});
   });
 
+  testWidgets('parts を持たない旧形式（項目がトップレベル）も読める', (tester) async {
+    final ref = await _ref(tester);
+    await restoreLearningDataBackup(ref, _parts(), '{"version":1,"exportedAt":"2026-10-06","count":4}');
+    expect(ref.read(_countProvider), 4);
+    expect(ref.read(_memoProvider), isEmpty);
+  });
+
   testWidgets('不正な形式・未対応バージョンは FormatException', (tester) async {
     final ref = await _ref(tester);
-    for (final bad in ['これはJSONではない', '[1,2]', '{"version":9,"parts":{}}', '{"version":1}']) {
+    for (final bad in ['これはJSONではない', '[1,2]', '{"version":9,"parts":{}}', '{"version":1,"parts":5}']) {
       expect(() => restoreLearningDataBackup(ref, _parts(), bad), throwsFormatException, reason: bad);
     }
   });
