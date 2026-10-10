@@ -44,7 +44,7 @@ String encodeLearningDataBackup(WidgetRef ref, List<DataPart> parts, {DateTime? 
 }
 
 /// バックアップのJSON文字列を [parts] へ書き戻す。形式が不正・未対応なら
-/// [FormatException]。バックアップに無い部品は触らない（後から部品を足した
+/// [FormatException]。`parts` を持たない旧形式（項目がトップレベルに並ぶ形）も読める。バックアップに無い部品は触らない（後から部品を足した
 /// アプリでも、古いバックアップを読み込める）。
 Future<void> restoreLearningDataBackup(WidgetRef ref, List<DataPart> parts, String text) async {
   final Object? decoded;
@@ -60,7 +60,13 @@ Future<void> restoreLearningDataBackup(WidgetRef ref, List<DataPart> parts, Stri
   if (version != learningDataBackupFormatVersion) {
     throw FormatException('未対応のバックアップ形式です（version: $version）');
   }
-  final saved = decoded['parts'];
+  // 共通化前のアプリのバックアップは、`parts` を使わず項目がトップレベルに並ぶ。
+  // その形式（`parts` が無い）も、項目をそのまま部品のidとして読む。
+  final saved = decoded.containsKey('parts')
+      ? decoded['parts']
+      : (Map<String, dynamic>.of(decoded)
+        ..remove('version')
+        ..remove('exportedAt'));
   if (saved is! Map<String, dynamic>) {
     throw const FormatException('バックアップの形式が正しくありません');
   }
